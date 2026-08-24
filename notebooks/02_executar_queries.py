@@ -64,20 +64,19 @@ q2 = """
 WITH ramos_mapeados AS (
     SELECT 
         CASE 
-            WHEN CAST(f.coramo AS TEXT) LIKE '5%' OR CAST(f.coramo AS TEXT) LIKE '05%' 
-                 OR CAST(f.coramo AS TEXT) IN ('53', '55', '54', '58', '52') THEN '01. Automóveis & Frotas'
-            WHEN CAST(f.coramo AS TEXT) LIKE '9%' OR CAST(f.coramo AS TEXT) LIKE '09%' 
-                 OR CAST(f.coramo AS TEXT) IN ('19', '97', '98', '13', '99', '12') THEN '02. Vida, Prestamista & Pessoas'
-            WHEN CAST(f.coramo AS TEXT) LIKE '1%' OR CAST(f.coramo AS TEXT) LIKE '01%' 
-                 OR CAST(f.coramo AS TEXT) IN ('11', '14', '15', '16', '17', '18') THEN '03. Patrimonial & Residencial'
-            WHEN CAST(f.coramo AS TEXT) LIKE '10%' OR CAST(f.coramo AS TEXT) IN ('62', '65', '71') THEN '04. Rural / Agronegócio'
-            WHEN CAST(f.coramo AS TEXT) LIKE '4%' OR CAST(f.coramo AS TEXT) LIKE '04%' 
-                 OR CAST(f.coramo AS TEXT) IN ('74', '77', '35') THEN '05. Transportes & Cargas'
-            WHEN CAST(f.coramo AS TEXT) LIKE '2%' OR CAST(f.coramo AS TEXT) LIKE '02%' 
-                 OR CAST(f.coramo AS TEXT) IN ('31', '37', '23') THEN '06. Resp. Civil, D&O e Linhas Financeiras'
-            WHEN CAST(f.coramo AS TEXT) LIKE '8%' OR CAST(f.coramo AS TEXT) LIKE '08%' THEN '07. Habitacional'
-            WHEN CAST(f.coramo AS TEXT) LIKE '7%' OR CAST(f.coramo AS TEXT) LIKE '07%' THEN '08. Garantia & Fiança'
-            ELSE '09. Outros Ramos Elementares'
+            -- 1. Específicos de 2 dígitos primeiro (Precedência obrigatória)
+            WHEN CAST(coramo AS TEXT) LIKE '10%' THEN '04. Rural / Agronegócio'
+            WHEN CAST(coramo AS TEXT) LIKE '11%' THEN '03. Patrimonial & Residencial' -- Habitacional
+            WHEN CAST(coramo AS TEXT) LIKE '13%' THEN '02. Vida, Prestamista & Pessoas' -- Previdência/Pessoas
+            WHEN CAST(coramo AS TEXT) LIKE '02%' OR CAST(coramo AS TEXT) LIKE '09%' THEN '02. Vida, Prestamista & Pessoas'
+            WHEN CAST(coramo AS TEXT) LIKE '05%' OR CAST(coramo AS TEXT) LIKE '06%' THEN '05. Transportes & Cargas'
+            WHEN CAST(coramo AS TEXT) LIKE '07%' THEN '06. Resp. Civil & Linhas Financeiras'
+            WHEN CAST(coramo AS TEXT) LIKE '03%' OR CAST(coramo AS TEXT) LIKE '31%' THEN '01. Automóveis & Frotas'
+    
+            -- 2. Genéricos de 1 dígito por último
+            WHEN CAST(coramo AS TEXT) LIKE '01%' OR CAST(coramo AS TEXT) LIKE '1%' THEN '03. Patrimonial & Residencial'
+            
+            ELSE '09. Outros Ramos'
         END AS linha_negocio,
         f.premio_ganho,
         f.sinistro_ocorrido

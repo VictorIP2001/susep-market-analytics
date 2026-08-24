@@ -43,27 +43,32 @@ def mapear_grupo(nome):
 
 df_cias['grupo_economico'] = df_cias['nome_seguradora'].apply(mapear_grupo)
 
-# 3. Dimensão Ramos com todas as colunas esperadas pelo Power Query
+# 3. Dimensão Ramos com a ordem de precedência corrigida
 ramos_unicos = df_fato[['coramo']].drop_duplicates().copy()
 
 def classificar_linha(cod):
     c = str(cod).strip()
-    if c.startswith('5') or c.startswith('05') or c.startswith('53') or c.startswith('55') or c.startswith('54') or c.startswith('58') or c.startswith('52'):
-        return '01. Automóveis & Frotas'
-    if c.startswith('9') or c.startswith('09') or c.startswith('19') or c.startswith('97') or c.startswith('98') or c.startswith('13') or c.startswith('99') or c.startswith('12'):
-        return '02. Vida, Prestamista & Pessoas'
-    if c.startswith('1') or c.startswith('01') or c.startswith('11') or c.startswith('14') or c.startswith('15') or c.startswith('16') or c.startswith('17') or c.startswith('18'):
-        return '03. Patrimonial & Residencial'
-    if c.startswith('10') or c.startswith('62') or c.startswith('65') or c.startswith('71'):
+    
+    # 1. Prefixos específicos de 2 dígitos PRIMEIRO
+    if c.startswith(('10', '62', '65', '71')):
         return '04. Rural / Agronegócio'
-    if c.startswith('4') or c.startswith('04') or c.startswith('74') or c.startswith('77') or c.startswith('35'):
+    if c.startswith(('13', '12', '19', '97', '98', '99', '09', '9')):
+        return '02. Vida, Prestamista & Pessoas'
+    if c.startswith(('53', '55', '54', '58', '52', '05', '5')):
+        return '01. Automóveis & Frotas'
+    if c.startswith(('74', '77', '35', '04', '4')):
         return '05. Transportes & Cargas'
-    if c.startswith('2') or c.startswith('02') or c.startswith('31') or c.startswith('37') or c.startswith('23'):
+    if c.startswith(('31', '37', '23', '02', '2')):
         return '06. Resp. Civil & Linhas Financeiras'
-    if c.startswith('8') or c.startswith('08'):
+    if c.startswith(('08', '8')):
         return '07. Habitacional'
-    if c.startswith('7') or c.startswith('07'):
+    if c.startswith(('07', '7')):
         return '08. Garantia & Fiança'
+        
+    # 2. Prefixos genéricos de Patrimonial por ÚLTIMO (para não engolir o 10, 12, 13)
+    if c.startswith(('01', '11', '14', '15', '16', '17', '18', '1')):
+        return '03. Patrimonial & Residencial'
+        
     return '09. Outros Ramos'
 
 ramos_unicos['linha_negocio'] = ramos_unicos['coramo'].apply(classificar_linha)
@@ -77,4 +82,4 @@ df_fato.to_csv("data_bi/fato_seguros.csv", index=False, sep=";", decimal=",", en
 df_cias.to_csv("data_bi/dim_seguradoras.csv", index=False, sep=";", decimal=",", encoding="utf-8-sig")
 df_ramos.to_csv("data_bi/dim_ramos.csv", index=False, sep=";", decimal=",", encoding="utf-8-sig")
 
-print("✅ Arquivos atualizados com todas as colunas mantidas!")
+print("✅ Arquivos atualizados com todas as colunas mantidas e precedência de ramos corrigida!")
