@@ -25,10 +25,25 @@ def limpar_monetario(serie):
 # ----------------------------------------------------
 print("📥 Processando Seguradoras (Ses_cias.csv)...")
 df_cias = pd.read_csv(os.path.join(BASE_PATH, "Ses_cias.csv"), sep=";", encoding="latin1", low_memory=False)
-# Padronizar nomes das colunas em minúsculo
 df_cias.columns = [c.strip().lower() for c in df_cias.columns]
+
+# Enriquecimento: Mapeamento padronizado de Grupos Econômicos
+def mapear_grupo_economico(nome):
+    n = str(nome).upper()
+    if 'BRADESCO' in n: return 'GRUPO BRADESCO SEGUROS'
+    if any(k in n for k in ['PORTO SEGURO', 'AZUL COMPANHIA', 'ITAÚ SEGUROS', 'ITAU SEGUROS']): return 'GRUPO PORTO / ITAÚ'
+    if any(k in n for k in ['BRASILSEG', 'BB SEGUR', 'BRASILVEÍCULOS']): return 'GRUPO BB SEGUROS (BRASILSEG)'
+    if 'MAPFRE' in n: return 'GRUPO MAPFRE'
+    if 'TOKIO MARINE' in n: return 'GRUPO TOKIO MARINE'
+    if 'ZURICH' in n: return 'GRUPO ZURICH'
+    if 'ALLIANZ' in n: return 'GRUPO ALLIANZ'
+    if any(k in n for k in ['SUL AMÉRICA', 'SULAMERICA']): return 'GRUPO SULAMÉRICA'
+    if 'CAIXA' in n: return 'GRUPO CAIXA SEGURIDADE'
+    return nome
+
+df_cias['grupo_economico'] = df_cias['noenti'].apply(mapear_grupo_economico)
 df_cias.to_sql("dim_seguradoras", engine, if_exists="replace", index=False)
-print(f"✅ Dimensão Seguradoras salva ({len(df_cias)} registros).")
+print(f"✅ Dimensão Seguradoras salva com grupo_economico ({len(df_cias)} registros).")
 
 # ----------------------------------------------------
 # 2. Processar Dimensão Ramos (Ses_ramos.csv)
@@ -36,9 +51,33 @@ print(f"✅ Dimensão Seguradoras salva ({len(df_cias)} registros).")
 print("📥 Processando Ramos de Seguros (Ses_ramos.csv)...")
 df_ramos = pd.read_csv(os.path.join(BASE_PATH, "Ses_ramos.csv"), sep=";", encoding="latin1", low_memory=False)
 df_ramos.columns = [c.strip().lower() for c in df_ramos.columns]
-df_ramos.to_sql("dim_ramos", engine, if_exists="replace", index=False)
-print(f"✅ Dimensão Ramos salva ({len(df_ramos)} registros).")
 
+# Enriquecimento: Classificação Oficial SUSEP com 4 dígitos padronizados
+def classificar_linha_oficial(cod):
+    # Força 4 dígitos sempre: ex: 111 -> 0111, 776 -> 0776, 531 -> 0531
+    c = str(cod).strip().zfill(4)
+    
+    if c.startswith(('10', '62', '65', '71')):
+        return '04. Rural / Agronegócio'
+    if c.startswith(('02', '09', '12', '13', '19', '97', '98', '99')):
+        return '02. Vida, Prestamista & Pessoas'
+    if c.startswith(('03', '05', '52', '53', '54', '55', '58')):
+        return '01. Automóveis & Frotas'
+    if c.startswith(('04', '06', '35', '74', '77')):
+        return '05. Transportes & Cargas'
+    if c.startswith('07'):
+        return '08. Garantia & Fiança'
+    if c.startswith('08'):
+        return '07. Habitacional'
+    if c.startswith(('23', '31', '37')):
+        return '06. Resp. Civil & Linhas Financeiras'
+    if c.startswith(('01', '11', '14', '15', '16', '17', '18')):
+        return '03. Patrimonial & Residencial'
+    return '09. Outros Ramos'
+
+df_ramos['linha_negocio'] = df_ramos['coramo'].apply(classificar_linha_oficial)
+df_ramos.to_sql("dim_ramos", engine, if_exists="replace", index=False)
+print(f"✅ Dimensão Ramos salva com linha_negocio ({len(df_ramos)} registros).")
 # ----------------------------------------------------
 # 3. Processar Grupos de Ramos (ses_gruposramos.csv)
 # ----------------------------------------------------
