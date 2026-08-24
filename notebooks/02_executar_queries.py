@@ -59,42 +59,24 @@ print(pd.read_sql(q1, engine).to_string(index=False))
 
 print("\n" + "="*90)
 print("🛡️ QUERY 2: CONSOLIDAÇÃO POR LINHA DE NEGÓCIO (SUSEP)")
+print("\n" + "="*90)
+print("🛡️ QUERY 2: CONSOLIDAÇÃO POR LINHA DE NEGÓCIO (SUSEP) - FONTE ÚNICA")
 print("="*90)
 q2 = """
-WITH ramos_mapeados AS (
-    SELECT 
-        CASE 
-            -- 1. Específicos de 2 dígitos primeiro (Precedência obrigatória)
-            WHEN CAST(coramo AS TEXT) LIKE '10%' THEN '04. Rural / Agronegócio'
-            WHEN CAST(coramo AS TEXT) LIKE '11%' THEN '03. Patrimonial & Residencial' -- Habitacional
-            WHEN CAST(coramo AS TEXT) LIKE '13%' THEN '02. Vida, Prestamista & Pessoas' -- Previdência/Pessoas
-            WHEN CAST(coramo AS TEXT) LIKE '02%' OR CAST(coramo AS TEXT) LIKE '09%' THEN '02. Vida, Prestamista & Pessoas'
-            WHEN CAST(coramo AS TEXT) LIKE '05%' OR CAST(coramo AS TEXT) LIKE '06%' THEN '05. Transportes & Cargas'
-            WHEN CAST(coramo AS TEXT) LIKE '07%' THEN '06. Resp. Civil & Linhas Financeiras'
-            WHEN CAST(coramo AS TEXT) LIKE '03%' OR CAST(coramo AS TEXT) LIKE '31%' THEN '01. Automóveis & Frotas'
-    
-            -- 2. Genéricos de 1 dígito por último
-            WHEN CAST(coramo AS TEXT) LIKE '01%' OR CAST(coramo AS TEXT) LIKE '1%' THEN '03. Patrimonial & Residencial'
-            
-            ELSE '09. Outros Ramos'
-        END AS linha_negocio,
-        f.premio_ganho,
-        f.sinistro_ocorrido
-    FROM fato_seguros f
-    WHERE f.premio_ganho > 0
-)
 SELECT 
-    linha_negocio,
-    ROUND(SUM(premio_ganho) / 1e9, 2) AS premio_bi,
-    ROUND(SUM(sinistro_ocorrido) / 1e9, 2) AS sinistro_bi,
-    ROUND((SUM(sinistro_ocorrido) * 1.0 / NULLIF(SUM(premio_ganho), 0)) * 100, 1) AS loss_ratio_pct,
+    r.linha_negocio,
+    ROUND(SUM(f.premio_ganho) / 1e9, 2) AS premio_bi,
+    ROUND(SUM(f.sinistro_ocorrido) / 1e9, 2) AS sinistro_bi,
+    ROUND((SUM(f.sinistro_ocorrido) * 1.0 / NULLIF(SUM(f.premio_ganho), 0)) * 100, 1) AS loss_ratio_pct,
     CASE 
-        WHEN (SUM(sinistro_ocorrido) * 1.0 / NULLIF(SUM(premio_ganho), 0)) > 0.50 THEN 'Alerta (Sinistralidade Elevada)'
-        WHEN (SUM(sinistro_ocorrido) * 1.0 / NULLIF(SUM(premio_ganho), 0)) BETWEEN 0.30 AND 0.50 THEN 'Equilibrado'
+        WHEN (SUM(f.sinistro_ocorrido) * 1.0 / NULLIF(SUM(f.premio_ganho), 0)) > 0.50 THEN 'Alerta (Sinistralidade Elevada)'
+        WHEN (SUM(f.sinistro_ocorrido) * 1.0 / NULLIF(SUM(f.premio_ganho), 0)) BETWEEN 0.30 AND 0.50 THEN 'Equilibrado'
         ELSE 'Alta Rentabilidade'
     END AS status_operacional
-FROM ramos_mapeados
-GROUP BY linha_negocio
+FROM fato_seguros f
+JOIN dim_ramos r ON f.coramo = r.coramo
+WHERE f.premio_ganho > 0
+GROUP BY r.linha_negocio
 ORDER BY premio_bi DESC;
 """
 print(pd.read_sql(q2, engine).to_string(index=False))
