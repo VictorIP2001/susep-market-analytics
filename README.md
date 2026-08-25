@@ -43,11 +43,12 @@ O projeto consolida dados contábeis oficiais para responder a perguntas estrat�
 
 ---
 
-## 🏗️ Arquitetura e Engenharia de Dados
+## 📊 Principais Insights de Negócio & Mercado Segurador
 
-```mermaid
-graph LR
-    A[Dados Abertos SUSEP / SES] -->|Download & Extração| B[Python ETL Scripts]
-    B -->|Normalização & Grupos| C[(SQLite Database)]
-    C -->|Star Schema Otimizado| D[Power BI Desktop]
-    D -->|DAX Engine & UI Executiva| E[Executive Dashboard]
+Com base na consolidação de mais de **1,8 milhão de registros históricos da SUSEP** e no volume de **R$ 1,01 Tri em prêmios ganhos**, destacam-se os seguintes achados:
+
+* **Alta Concentração de Mercado no Top 3:** O *Grupo Porto / Itaú* lidera o market share nacional com ~16,2% de participação, seguido por *Grupo Bradesco Seguros* (~9,6%) e *BB Seguros / Brasilseg* (~9,5%). Juntos, os três maiores grupos concentram mais de um terço de todo o prêmio emitido no país.
+* **Dominância de Linhas Pessoais e Patrimoniais:** As carteiras de *Vida, Prestamista & Pessoas* (~R$ 351 Bi) e *Automóveis & Frotas* (~R$ 320 Bi) representam mais de 65% da receita operacional total do mercado.
+* **Eficiência e Rentabilidade Operacional:** O mercado consolidado opera com um *Loss Ratio* (Sinistralidade) médio de **44,3%**, considerado um patamar saudável e controlado dentro dos padrões atuariais regulatórios.
+* **Resiliência do Ramo Rural / Agronegócio:** Com a modelagem estrita e correção na precedência de ramos, a carteira de *Rural / Agro* revelou um volume acumulado expressivo de **R$ 76 Bi**, com índice de sinistralidade equilibrado (~30,2%), reforçando a força do agronegócio na demanda de proteção securitária.
+* **Crescimento Consistente e Sazonalidade:** A série temporal histórica (2020–2026) demonstra estabilidade nos prêmios emitidos mês a mês (~R$ 16–17 Bi/mês em 2026), com picos controlados de sinistralidade ao longo do ciclo econômico.
